@@ -10,32 +10,51 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
+  String _status = 'Unknown';
+
+  Facebook facebook = new Facebook();
 
   @override
   initState() {
     super.initState();
-    initPlatformState();
+    _initSdk();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-      platformVersion = await Facebook.platformVersion;
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
+  _initSdk () {
+    print("ok");
+    facebook.initSdk().then((result){
+      print("db login ${result}");
+      if(result.status == FbStatus.Success)
+        setState((){  _status = "Sdk init ok!"; });
+      else
+        setState((){  _status = "Sdk init problems!"; });
+    }).catchError((err){
+      print(err);
+      setState((){  _status = "Sdk init error: ${err}"; });
+    });
+  }
 
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted)
-      return;
+  _isLoggedIn() {
+    facebook.isLoggedIn().then((result){
+      if(result)
+        setState((){  _status = "fb is logged in"; });
+      else
+        setState((){  _status = "fb is not logged in "; });
+    }).catchError((err){
+      print(err);
+      setState((){  _status = "call error: ${err}"; });
+    });
+  }
 
-    setState(() {
-      _platformVersion = platformVersion;
+  _logIn() {
+    facebook.logInWithReadPermissions().then((result){
+      if(result.status == FbStatus.Success)
+        setState((){  _status = "login ok with user id: ${result.data['userId']}"; });
+      else
+        setState((){  _status = "login fail: ${result.message}"; });
+    }).catchError((err){
+      print(err);
+      setState((){  _status = "call error: ${err}"; });
     });
   }
 
@@ -44,10 +63,58 @@ class _MyAppState extends State<MyApp> {
     return new MaterialApp(
       home: new Scaffold(
         appBar: new AppBar(
-          title: new Text('Plugin example app'),
+          title: new Text('Facebook Plugin example'),
         ),
-        body: new Center(
-          child: new Text('Running on: $_platformVersion\n'),
+        body: new Container(
+          child: new Column(
+            children: <Widget>[
+              new Container(
+                padding: const EdgeInsets.only(top: 30.0),
+                child: new Center(
+                  child: new Text('Status: $_status\n'),
+                ),
+              ),
+              new Container(
+                padding: const EdgeInsets.only(top: 10.0),
+                child: new FlatButton(
+                  color: Colors.blue[700],
+                  onPressed: _initSdk,
+                  child: new Text(
+                    "Init SDK",
+                    style: new TextStyle(
+                        color: Colors.white
+                    ),
+                  ),
+                ),
+              ),
+              new Container(
+                padding: const EdgeInsets.only(top: 10.0),
+                child: new FlatButton(
+                  color: Colors.blue[700],
+                  onPressed: _isLoggedIn,
+                  child: new Text(
+                    "Is Logged In",
+                    style: new TextStyle(
+                      color: Colors.white
+                    ),
+                  ),
+                ),
+              ),
+              new Container(
+                padding: const EdgeInsets.only(top: 10.0),
+                child: new FlatButton(
+                  color: Colors.blue[700],
+                  onPressed: _logIn,
+                  child: new Text(
+                    "LogIn",
+                    style: new TextStyle(
+                        color: Colors.white
+                    ),
+                  ),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );

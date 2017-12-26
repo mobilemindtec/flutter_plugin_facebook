@@ -153,8 +153,11 @@ public class FacebookPlugin : MethodCallHandler {
     fun getAccessToken() {
         var current = AccessToken.getCurrentAccessToken()
         if(current != null) {
-            var token = AccessToken.getCurrentAccessToken().token
-            this.methodResult!!.success(token)
+            var accessToken = AccessToken.getCurrentAccessToken()
+            this.methodResult!!.success({
+              "token" to accessToken.token,
+              "userId" to accessToken.userId
+            })
         } else {
             this.methodResult!!.success(null)
         }

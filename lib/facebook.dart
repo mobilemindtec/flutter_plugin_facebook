@@ -35,10 +35,13 @@ class Facebook {
     try{
       final Map result = await platform.invokeMethod('initSdk');
 
-      if(result["status"] == "success")
-        return new FbResult({status: FbStatus.Success});
+      print("result=${result}");
+      print("result=${result.runtimeType}");
 
-      return new FbResult({status: FbStatus.Error, message: result["message"]});
+      if(result["status"] == "success")
+        return new FbResult(status: FbStatus.Success);
+
+      return new FbResult(status: FbStatus.Error, message: result["message"]);
 
     }on PlatformException catch (e) {
       throw new FacebookException(e.message);
@@ -59,7 +62,7 @@ class Facebook {
 
       final Map result = await platform.invokeMethod('logInWithReadPermissions', params);
 
-      return new FbResult({status: FbStatus.Success, data: result});
+      return new FbResult(status: FbStatus.Success, data: result);
 
     }on PlatformException catch (e) {
       throw new FacebookException(e.message);
@@ -80,7 +83,7 @@ class Facebook {
 
       final Map result = await platform.invokeMethod('logInWithPublishPermissions', params);
 
-      return new FbResult({status: FbStatus.Success, data: result});
+      return new FbResult(status: FbStatus.Success, data: result);
 
     }on PlatformException catch (e) {
       throw new FacebookException(e.message);
@@ -107,7 +110,7 @@ class Facebook {
   Future<Map> getAccessToken() async {
     try{
       final Map result = await platform.invokeMethod('getAccessToken');
-      return new FbResult({status: FbStatus.Success, data: result});
+      return new FbResult(status: FbStatus.Success, data: result);
     }on PlatformException catch (e) {
       throw new FacebookException(e.message);
     }
