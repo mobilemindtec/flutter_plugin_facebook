@@ -37,9 +37,9 @@ class _MyAppState extends State<MyApp> {
   _isLoggedIn() {
     facebook.isLoggedIn().then((result){
       if(result)
-        setState((){  _status = "fb is logged in"; });
+        setState((){  _status = "fb is logged"; });
       else
-        setState((){  _status = "fb is not logged in "; });
+        setState((){  _status = "fb is not logged "; });
     }).catchError((err){
       print(err);
       setState((){  _status = "call error: ${err}"; });
@@ -52,6 +52,51 @@ class _MyAppState extends State<MyApp> {
         setState((){  _status = "login ok with user id: ${result.data['userId']}"; });
       else
         setState((){  _status = "login fail: ${result.message}"; });
+    }).catchError((err){
+      print(err);
+      setState((){  _status = "call error: ${err}"; });
+    });
+  }
+
+  _logOut() {
+    facebook.logOut().then((result){
+      setState((){  _status = "logout ok"; });
+    }).catchError((err){
+      print(err);
+      setState((){  _status = "call error: ${err}"; });
+    });
+  }
+
+  _isInstaled() {
+    facebook.isInstalled().then((result){
+      if(result)
+        setState((){  _status = "facebook app is installed"; });
+      else
+        setState((){  _status = "facebook app is not installed"; });
+    }).catchError((err){
+      print(err);
+      setState((){  _status = "call error: ${err}"; });
+    });
+  }
+
+  _canInvite() {
+    facebook.canInvite().then((result){
+      if(result)
+        setState((){  _status = "yes, you can invite"; });
+      else
+        setState((){  _status = "no, you can not invite"; });
+    }).catchError((err){
+      print(err);
+      setState((){  _status = "call error: ${err}"; });
+    });
+  }
+
+  _requestMe() {
+    facebook.requestMe().then((result){
+      if(result.status == FbStatus.Success)
+        setState((){  _status = "name = ${result.data['name']}"; });
+      else
+        setState((){  _status = "fail: ${result.message}"; });
     }).catchError((err){
       print(err);
       setState((){  _status = "call error: ${err}"; });
@@ -74,46 +119,30 @@ class _MyAppState extends State<MyApp> {
                   child: new Text('Status: $_status\n'),
                 ),
               ),
-              new Container(
-                padding: const EdgeInsets.only(top: 10.0),
-                child: new FlatButton(
-                  color: Colors.blue[700],
-                  onPressed: _initSdk,
-                  child: new Text(
-                    "Init SDK",
-                    style: new TextStyle(
-                        color: Colors.white
-                    ),
-                  ),
-                ),
-              ),
-              new Container(
-                padding: const EdgeInsets.only(top: 10.0),
-                child: new FlatButton(
-                  color: Colors.blue[700],
-                  onPressed: _isLoggedIn,
-                  child: new Text(
-                    "Is Logged In",
-                    style: new TextStyle(
-                      color: Colors.white
-                    ),
-                  ),
-                ),
-              ),
-              new Container(
-                padding: const EdgeInsets.only(top: 10.0),
-                child: new FlatButton(
-                  color: Colors.blue[700],
-                  onPressed: _logIn,
-                  child: new Text(
-                    "LogIn",
-                    style: new TextStyle(
-                        color: Colors.white
-                    ),
-                  ),
-                ),
-              )
+              createButton("is logged", _isLoggedIn),
+              createButton("log in", _logIn),
+              createButton("log out", _logOut),
+              createButton("fb app is installed", _isInstaled),
+              createButton("can invite", _canInvite),
+              createButton("request me profile", _requestMe),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Container createButton(String text, Function action){
+    return new Container(
+      padding: const EdgeInsets.only(top: 10.0),
+      width: 200.0,
+      child: new FlatButton(
+        color: Colors.blue[700],
+        onPressed: action,
+        child: new Text(
+          text,
+          style: new TextStyle(
+            color: Colors.white
           ),
         ),
       ),
