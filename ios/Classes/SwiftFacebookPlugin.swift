@@ -141,10 +141,6 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
                 self.fields = value  as! String
             }
 
-            if let value = map["fields"] {
-                self.fields = value  as! String
-            }
-
             if let value = map["appLinkUrl"] {
                 self.appLinkUrl = value  as! String
             }
@@ -169,7 +165,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
                 self.shareVideoUrl = value  as! String
             }
 
-            if let value = map["    "] {
+            if let value = map["linkUrl"] {
                 self.shareLinkUrl = value  as! String
             }
 
@@ -343,10 +339,16 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
                 let args = ["status": "error", "message": error?.localizedDescription]
                 self.flutterResult!!(args)
             } else {
-                let map = result as! [AnyHashable: Any]
-                var data = self.toJson(data: map)
-                data["status"] = "success"
+                //let map = result as! [AnyHashable: Any]
+                
+                //- Parameter result:          The result of the request.  This is a translation of
+                // JSON data to `NSDictionary` and `NSArray` objects.  This
+                // is nil if there was an error.
+
+                var data = ["status": "success", "result": result ]                
                 self.flutterResult!!(data)
+                
+                
             }
         }
         
