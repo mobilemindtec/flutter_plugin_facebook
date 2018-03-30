@@ -35,6 +35,7 @@ class Facebook {
     try{
       final Map result = await platform.invokeMethod('initSdk');
 
+
       if(result["status"] == "success")
         return new FbResult(status: FbStatus.Success);
 
@@ -107,6 +108,152 @@ class Facebook {
     try{
       final Map result = await platform.invokeMethod('getAccessToken');
       return new FbResult(status: FbStatus.Success, data: result);
+<<<<<<< HEAD
+=======
+    }on PlatformException catch (e) {
+      throw new FacebookException(e.message);
+    }
+  }
+
+  Future<bool> isInstalled() async {
+    try{
+      final bool installed = await platform.invokeMethod('isInstalled');
+      return installed;
+    }on PlatformException catch (e) {
+      throw new FacebookException(e.message);
+    }
+  }
+
+  Future<bool> canInvite() async {
+    try{
+      final bool val = await platform.invokeMethod('canInvite');
+      return val;
+    }on PlatformException catch (e) {
+      throw new FacebookException(e.message);
+    }
+  }
+
+
+  Future<FbResult> invite(String appLinkUrl, String appPreviewImageUrl) async {
+    try{
+      final Map result = await platform.invokeMethod('invite', {
+        "appLinkUrl": appLinkUrl,
+        "appPreviewImageUrl": appPreviewImageUrl
+      });
+
+      if(result["status"] == "success")
+        return new FbResult(status: FbStatus.Success);
+
+      return new FbResult(status: FbStatus.Error, message: result["message"]);
+
+    }on PlatformException catch (e) {
+      throw new FacebookException(e.message);
+    }
+  }
+
+  Future<FbResult> requestMe([String fields]) async {
+    try{
+
+      var args = {};
+
+      if(fields != null)
+        args["fields"] = fields;
+
+      final Map result = await platform.invokeMethod('requestMe', args);
+
+      if(result["status"] == "success")
+        return new FbResult(status: FbStatus.Success, data: result);
+
+      return new FbResult(status: FbStatus.Error, message: result["message"]);
+
+    }on PlatformException catch (e) {
+      throw new FacebookException(e.message);
+    }
+  }
+
+  Future<FbResult> requestGraph([Map parameters]) async {
+    try{
+
+      var args = {};
+
+      final Map result = await platform.invokeMethod('requestGraphPath', parameters);
+
+      if(result["status"] == "success")
+        return new FbResult(status: FbStatus.Success, data: result);
+
+      return new FbResult(status: FbStatus.Error, message: result["message"]);
+
+    }on PlatformException catch (e) {
+      throw new FacebookException(e.message);
+    }
+  }
+
+  Future<FbResult> shareLink(String linkUrl) async {
+    try{
+
+      var args = {};
+
+      final Map result = await platform.invokeMethod('shareLink', {
+        "linkUrl": linkUrl
+      });
+
+      if(result["status"] == "success")
+        return new FbResult(status: FbStatus.Success);
+
+      if(result["status"] == "cancel")
+        return new FbResult(status: FbStatus.Cancel);
+
+      return new FbResult(status: FbStatus.Error, message: result["message"]);
+
+    }on PlatformException catch (e) {
+      throw new FacebookException(e.message);
+    }
+  }
+
+  Future<FbResult> shareVideo(String videoUrl) async {
+    try{
+
+      var args = {};
+
+      final Map result = await platform.invokeMethod('shareLink', {
+        "videoUrl": videoUrl
+      });
+
+      if(result["status"] == "success")
+        return new FbResult(status: FbStatus.Success);
+
+      if(result["status"] == "cancel")
+        return new FbResult(status: FbStatus.Cancel);
+
+      return new FbResult(status: FbStatus.Error, message: result["message"]);
+
+    }on PlatformException catch (e) {
+      throw new FacebookException(e.message);
+    }
+  }
+
+  Future<FbResult> sharePhoto(String photoUrl) async {
+    return sharePhotos([photoUrl]);
+  }
+
+  Future<FbResult> sharePhotos(List<String> photosUrl) async {
+    try{
+
+      var args = {};
+
+      final Map result = await platform.invokeMethod('shareLink', {
+        "sharePhotosUrl": photosUrl
+      });
+
+      if(result["status"] == "success")
+        return new FbResult(status: FbStatus.Success);
+
+      if(result["status"] == "cancel")
+        return new FbResult(status: FbStatus.Cancel);
+
+      return new FbResult(status: FbStatus.Error, message: result["message"]);
+
+>>>>>>> 65c0acc5332c191c4a775f82cb956c07c3adb3db
     }on PlatformException catch (e) {
       throw new FacebookException(e.message);
     }
