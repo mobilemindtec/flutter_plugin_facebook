@@ -11,6 +11,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _status = 'Unknown';
+  String _imageUrl = "http://2.bp.blogspot.com/_6UXYawCQWIo/S-sk4_Q1clI/AAAAAAAADrU/8iGQzpirths/s1600/20101012+chuck-norris.jpg";
 
   Facebook facebook = new Facebook();
 
@@ -23,7 +24,7 @@ class _MyAppState extends State<MyApp> {
   _initSdk () {
     print("ok");
     facebook.initSdk().then((result){
-      print("db login ${result}");
+      print("facebook login ${result}");
       if(result.status == FbStatus.Success)
         setState((){  _status = "Sdk init ok!"; });
       else
@@ -47,9 +48,13 @@ class _MyAppState extends State<MyApp> {
   }
 
   _logIn() {
-    facebook.logInWithReadPermissions().then((result){
+
+    var permissions = "public_profile,email,user_birthday";
+    var fields = "id,name,email,birthday,gender,cover,picture.type(large)";
+
+    facebook.logInWithReadPermissions(fields: fields, permissions: permissions).then((result){
       if(result.status == FbStatus.Success)
-        setState((){  _status = "login ok with user id: ${result.data['userId']}"; });
+        setState((){  _status = "login ok with user id: ${result.data}"; });
       else
         setState((){  _status = "login fail: ${result.message}"; });
     }).catchError((err){
@@ -91,11 +96,30 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  _invite() {
+
+    var appUrl = "https://play.google.com/store/apps/details?id=br.com.mobloja.demo";
+    var appBanner = "https://www.appmobloja.com.br//images/sites/mobloja/slider2.png";
+
+    facebook.invite(appUrl, appBanner).then((result){
+      if(result.status == FbStatus.Success)
+        setState((){  _status = "invite ok"; });
+      else
+        setState((){  _status = "invite fail: ${result.message}"; });
+    }).catchError((err){
+      print(err);
+      setState((){  _status = "call error: ${err}"; });
+    });
+  }
+
   _requestMe() {
     facebook.requestMe().then((result){
-      if(result.status == FbStatus.Success)
-        setState((){  _status = "name = ${result.data['name']}"; });
-      else
+      if(result.status == FbStatus.Success) {
+        setState(() {
+          _status = " ${result.data}";
+          _imageUrl = result.data["picture"]["data"]["url"];
+        });
+      }else
         setState((){  _status = "fail: ${result.message}"; });
     }).catchError((err){
       print(err);
@@ -111,20 +135,31 @@ class _MyAppState extends State<MyApp> {
           title: new Text('Facebook Plugin example'),
         ),
         body: new Container(
-          child: new Column(
+          child: new ListView(
             children: <Widget>[
               new Container(
                 padding: const EdgeInsets.only(top: 30.0),
                 child: new Center(
-                  child: new Text('Status: $_status\n'),
+                  child: new Text(
+                    'Result: $_status\n',
+                    softWrap: true,
+                  ),
                 ),
+              ),
+              new Container(
+                child: new Image(
+                  image: new NetworkImage(this._imageUrl),
+                  height: 100.0,
+                  width: 100.0,
+                  fit: BoxFit.contain,
+                )
               ),
               createButton("is logged", _isLoggedIn),
               createButton("log in", _logIn),
               createButton("log out", _logOut),
               createButton("fb app is installed", _isInstaled),
-              createButton("can invite", _canInvite),
               createButton("request me profile", _requestMe),
+              createButton("invite", _invite),
             ],
           ),
         ),

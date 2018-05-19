@@ -55,7 +55,7 @@ class Facebook {
         params["permissions"] = permissions;
 
       if(fields != null)
-        params["fields"] = permissions;
+        params["fields"] = fields;
 
       final Map result = await platform.invokeMethod('logInWithReadPermissions', params);
 
@@ -76,7 +76,7 @@ class Facebook {
         params["permissions"] = permissions;
 
       if(fields != null)
-        params["fields"] = permissions;
+        params["fields"] = fields;
 
       final Map result = await platform.invokeMethod('logInWithPublishPermissions', params);
 
@@ -104,12 +104,11 @@ class Facebook {
     }
   }
 
-  Future<Map> getAccessToken() async {
+  Future<FbResult> getAccessToken() async {
     try{
       final Map result = await platform.invokeMethod('getAccessToken');
-      return new FbResult(status: FbStatus.Success, data: result);
-<<<<<<< HEAD
-=======
+
+      new FbResult(status: FbStatus.Success, data: result != null ? result["token"] : null);
     }on PlatformException catch (e) {
       throw new FacebookException(e.message);
     }
@@ -162,7 +161,7 @@ class Facebook {
       final Map result = await platform.invokeMethod('requestMe', args);
 
       if(result["status"] == "success")
-        return new FbResult(status: FbStatus.Success, data: result);
+        return new FbResult(status: FbStatus.Success, data: result["result"]);
 
       return new FbResult(status: FbStatus.Error, message: result["message"]);
 
@@ -179,7 +178,7 @@ class Facebook {
       final Map result = await platform.invokeMethod('requestGraphPath', parameters);
 
       if(result["status"] == "success")
-        return new FbResult(status: FbStatus.Success, data: result);
+        return new FbResult(status: FbStatus.Success, data: result["result"]);
 
       return new FbResult(status: FbStatus.Error, message: result["message"]);
 
@@ -253,7 +252,7 @@ class Facebook {
 
       return new FbResult(status: FbStatus.Error, message: result["message"]);
 
->>>>>>> 65c0acc5332c191c4a775f82cb956c07c3adb3db
+
     }on PlatformException catch (e) {
       throw new FacebookException(e.message);
     }

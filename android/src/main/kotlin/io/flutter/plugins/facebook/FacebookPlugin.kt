@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import com.facebook.*
 import com.facebook.GraphRequest.newGraphPathRequest
 import com.facebook.login.LoginManager
@@ -108,50 +109,62 @@ public class FacebookPlugin : MethodCallHandler {
             }
             methodLogOut -> {
                 methodResult = result
+                readArgs(call)
                 logOut()
             }
             methodIsLoggedIn -> {
                 methodResult = result
+                readArgs(call)
                 isLoggedIn()
             }
             methodGetAccessToken -> {
                 methodResult = result
+                readArgs(call)
                 getAccessToken()
             }
             methodInitSdk -> {
                 methodResult = result
+                readArgs(call)
                 initSdk()
             }
             methodIsinstalled -> {
                 methodResult = result
+                readArgs(call)
                 isInstalled()
             }
             methodCanInvite -> {
                 methodResult = result
+                readArgs(call)
                 canInvite()
             }
             methodInvite -> {
                 methodResult = result
+                readArgs(call)
                 invite()
             }
             methodRequestGraphPath -> {
                 methodResult = result
+                readArgs(call)
                 requestGraphPath()
             }
             methodRequestMe -> {
                 methodResult = result
+                readArgs(call)
                 requestGraphMe()
             }
             methodShareLink -> {
                 methodResult = result
+                readArgs(call)
                 shareLink()
             }
             methodSharePhotos -> {
                 methodResult = result
+                readArgs(call)
                 sharePhotos()
             }
             methodShareVideo -> {
                 methodResult = result
+                readArgs(call)
                 shareVideo()
             }
             else -> {
@@ -162,55 +175,53 @@ public class FacebookPlugin : MethodCallHandler {
 
     fun readArgs(call: MethodCall){
 
-        if (call.hasArgument("params") && call.argument<Object>("params") is Map<*,*>) {
-            var params = call.argument<Map<String, Any>>("params")
 
-            if (params!!["permissions"] != null) {
-                var list = params!!["permissions"] as String
-                permissions = list.split(",").toTypedArray()
-            }
+        if (call.hasArgument("permissions")) {
+            var list = call.argument<String>("permissions")
+            permissions = list.split(",").toTypedArray()
+        }
 
-            if (params!!["fields"] != null) {
-                fields = params!!["fields"] as String
-            }
+        if (call.hasArgument("fields")) {
+            fields = call.argument<String>("fields")
+        }
 
-            if (params!!["appLinkUrl"] != null) {
-                this.appLinkUrl = params!!["appLinkUrl"] as String
-            }
+        if (call.hasArgument("appLinkUrl")) {
+            this.appLinkUrl = call.argument<String>("appLinkUrl")
+        }
 
-            if (params!!["appPreviewImageUrl"] != null) {
-                this.appPreviewImageUrl = params!!["appPreviewImageUrl"] as String
-            }
+        if (call.hasArgument("appPreviewImageUrl")) {
+            this.appPreviewImageUrl = call.argument<String>("appPreviewImageUrl")
+        }
 
-            if (params!!["graphRequestPath"] != null) {
-                this.graphRequestPath = params!!["graphRequestPath"] as String
-            }
+        if (call.hasArgument("graphRequestPath")) {
+            this.graphRequestPath = call.argument<String>("graphRequestPath")
+        }
 
-            if (params!!["graphRequestParameters"] != null && params!!["graphRequestParameters"] is Map<*,*>) {
-                var map = params!!["graphRequestParameters"] as Map<String, String>
-                graphRequestParameters.clear()
-                for ((key, value) in map) {
-                graphRequestParameters.put(key, value)
-            }
-            }
+        if (call.hasArgument("graphRequestParameters") ) {
+            var map = call.argument<Map<String, String>>("graphRequestParameters")
+            graphRequestParameters.clear()
+            for ((key, value) in map) {
+            graphRequestParameters.put(key, value)
+        }
+        }
 
-            if (params!!["videoUrl"] != null) {
-                this.shareVideoUrl = params!!["videoUrl"] as String
-            }
+        if (call.hasArgument("videoUrl")) {
+            this.shareVideoUrl = call.argument<String>("videoUrl")
+        }
 
-            if (params!!["linkUrl"] != null) {
-                this.shareLinkUrl = params!!["linkUrl"] as String
-            }
+        if (call.hasArgument("linkUrl")) {
+            this.shareLinkUrl = call.argument<String>("linkUrl")
+        }
 
-            if (params!!["sharePhotosUrl"] != null && params!!["sharePhotosUrl"] is List<*>) {
-                var photos = params!!["sharePhotosUrl"] as List<String>
-                this.sharePhotosUrl.clear()
+        if (call.hasArgument("sharePhotosUrl")) {
+            var photos =call.argument<List<String>>("sharePhotosUrl")
+            this.sharePhotosUrl.clear()
 
-                for (it in photos) {
-                    this.sharePhotosUrl.add(it)
-                }
+            for (it in photos) {
+                this.sharePhotosUrl.add(it)
             }
         }
+
     }
 
     fun initSdk(){
@@ -235,11 +246,15 @@ public class FacebookPlugin : MethodCallHandler {
     }
 
     fun logInWithReadPermissions(){
-        this.loginManager!!.logInWithReadPermissions(this.activity, Arrays.asList("public_profile"))
+        var permissions = mutableListOf<String>()
+        permissions.addAll(this.permissions)
+        this.loginManager!!.logInWithReadPermissions(this.activity, permissions)
     }
 
     fun logInWithPublishPermissions(){
-        this.loginManager!!.logInWithPublishPermissions(this.activity, Arrays.asList("public_profile"))
+        var permissions = mutableListOf<String>()
+        permissions.addAll(this.permissions)
+        this.loginManager!!.logInWithPublishPermissions(this.activity, permissions)
     }
 
     fun logOut() {
@@ -382,12 +397,17 @@ public class FacebookPlugin : MethodCallHandler {
 
     fun graphPathRequest(graphPath: String, parameters: Map<String, String>) {
 
+        //Log.i("FLUTTER FB", "${parameters}")
+        //Log.i("FLUTTER FB", parameters["fields"])
+
         var accessToken = AccessToken.getCurrentAccessToken()
         var callback = GraphRequest.Callback { response ->
             if(response?.error != null){
+                //Log.e("FLUTTER FB", response?.error.errorMessage, response?.error.exception)
+
                 methodResult!!.success(mapOf("status" to "error", "message" to response?.error.errorMessage))
             } else {
-
+                //Log.i("FLUTTER FB", response.rawResponse)
                 var result: Any? = null
 
                 if(response.jsonObject != null){
@@ -410,7 +430,7 @@ public class FacebookPlugin : MethodCallHandler {
                 bundle.putString(key, value)
             }
 
-            request.setParameters(bundle);
+            request.parameters = bundle
         }
 
         request.executeAsync()
