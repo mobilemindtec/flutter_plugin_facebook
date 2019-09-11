@@ -123,33 +123,6 @@ class Facebook {
     }
   }
 
-  Future<bool> canInvite() async {
-    try{
-      final bool val = await platform.invokeMethod('canInvite');
-      return val;
-    }on PlatformException catch (e) {
-      throw new FacebookException(e.message);
-    }
-  }
-
-
-  Future<FbResult> invite(String appLinkUrl, String appPreviewImageUrl) async {
-    try{
-      final Map result = await platform.invokeMethod('invite', {
-        "appLinkUrl": appLinkUrl,
-        "appPreviewImageUrl": appPreviewImageUrl
-      });
-
-      if(result["status"] == "success")
-        return new FbResult(status: FbStatus.Success);
-
-      return new FbResult(status: FbStatus.Error, message: result["message"]);
-
-    }on PlatformException catch (e) {
-      throw new FacebookException(e.message);
-    }
-  }
-
   Future<FbResult> requestMe([String fields]) async {
     try{
 

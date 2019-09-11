@@ -4,7 +4,9 @@ import FBSDKCoreKit
 import FBSDKLoginKit
 import FBSDKShareKit
     
-public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate, FBSDKAppInviteDialogDelegate, FBSDKSharingDelegate {
+public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate, SharingDelegate {
+
+    
     
     private static let channelName  = "plugins.flutter.io/facebook"
     private static let methodLogInWithPublishPermissions: String = "logInWithPublishPermissions"
@@ -15,8 +17,8 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     private static let methodInitSdk: String = "initSdk"
     
     private static let methodIsinstalled: String = "isInstalled"
-    private static let methodCanInvite: String = "canInvite"
-    private static let methodInvite: String = "invite"
+    //private static let methodCanInvite: String = "canInvite"
+    //private static let methodInvite: String = "invite"
     
     private static let methodRequestGraphPath: String = "requestGraphPath"
     private static let methodRequestMe: String = "requestMe"
@@ -27,7 +29,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
 
     
     private var initialized: Bool = false
-    private var loginManager: FBSDKLoginManager?!
+    private var loginManager: LoginManager?!
     private var permissions = ["public_profile", "email"]
     private var fields = "id,name,email"
     private var appLinkUrl: String = ""
@@ -87,15 +89,17 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
             self.flutterResult = result
             self.isInstalled()
             break
+        /*
         case SwiftFacebookPlugin.methodCanInvite:
             self.readArgs(call: call)
             self.flutterResult = result
             self.canInvite()
             break
+        */
         case SwiftFacebookPlugin.methodIsinstalled:
             self.readArgs(call: call)
             self.flutterResult = result
-            self.invite()
+            self.isInstalled()
             break
         case SwiftFacebookPlugin.methodRequestGraphPath:
             self.readArgs(call: call)
@@ -133,7 +137,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
         if call.arguments is Dictionary<String, String> {
             var map = call.arguments as! Dictionary<String, Any>
             if let value = map["permissions"]{
-                var val = value as! String
+                let val = value as! String
                 self.permissions = val.components(separatedBy: ",")
             }
 
@@ -154,10 +158,10 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
             }
 
             if let value = map["graphRequestParameters"] {
-                var map = value as! Dictionary<String, String>
+                let map = value as! Dictionary<String, String>
                 graphRequestParameters = [:]
                 for (key, value) in map {
-                    graphRequestParameters[key as! String] = value as! String
+                    graphRequestParameters[key] = value
                 }
             }
             
@@ -170,7 +174,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
             }
 
             if let value = map["sharePhotosUrl"] {
-                var photos = value as! Array<String>
+                let photos = value as! Array<String>
                 self.sharePhotosUrl = [String]()
                 
                 for it in photos {
@@ -183,7 +187,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     }
     
     func initSdk() {
-        self.loginManager = FBSDKLoginManager.init()
+        self.loginManager = LoginManager.init()
         if self.loginManager != nil {
             self.initialized = true
             
@@ -194,7 +198,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     }
     
     func isLoggedIn() {
-        let accessToken = FBSDKAccessToken.current()
+        let accessToken = AccessToken.current
         if accessToken != nil {
             self.flutterResult!!(true)
         } else {
@@ -204,9 +208,9 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     
     func getAccessToken() {
         if self.initialized {
-            let accessToken = FBSDKAccessToken.current()
+            let accessToken = AccessToken.current
             if accessToken != nil {
-                self.flutterResult!!(NSDictionary.init(dictionary: ["token": accessToken?.tokenString, "userId": accessToken?.userID]))
+                self.flutterResult!!(NSDictionary.init(dictionary: ["token": accessToken!.tokenString, "userId": accessToken!.userID]))
             } else {
                 self.flutterResult!!(NSDictionary.init(dictionary: ["status": "error", "message": "not logged in"]))
             }
@@ -218,14 +222,14 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     func logInWithPublishPermissions() {
         if self.initialized {
             let viewController = UIApplication.shared.delegate?.window!!.rootViewController
-            self.loginManager!!.logIn(withPublishPermissions: self.permissions, from: viewController) {
+            self.loginManager!!.logIn(permissions: self.permissions, from: viewController) {
                 (result, error) in
                 if error != nil {
-                    let args = NSDictionary.init(dictionary: ["status": "error", "message": error?.localizedDescription])
+                    let args = NSDictionary.init(dictionary: ["status": "error", "message": error!.localizedDescription])
                     self.flutterResult!!(args)
                 } else {
-                    let accessToken = result?.token
-                    self.flutterResult!!(NSDictionary.init(dictionary: ["status": "success","token": accessToken?.tokenString, "userId": accessToken?.userID]))
+                    let accessToken = result!.token
+                    self.flutterResult!!(NSDictionary.init(dictionary: ["status": "success","token": accessToken!.tokenString, "userId": accessToken!.userID]))
                 }
             }
         } else {
@@ -236,14 +240,14 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     func logInWithReadPermissions() {
         if self.initialized {
             let viewController = UIApplication.shared.delegate?.window!!.rootViewController
-            self.loginManager!!.logIn(withReadPermissions: self.permissions, from: viewController) {
+            self.loginManager!!.logIn(permissions: self.permissions, from: viewController) {
                 (result, error) in
                 if error != nil {
-                    let args = NSDictionary.init(dictionary: ["status": "error", "message": error?.localizedDescription])
+                    let args = NSDictionary.init(dictionary: ["status": "error", "message": error!.localizedDescription])
                     self.flutterResult!!(args);
                 } else {
                     let accessToken = result?.token
-                    self.flutterResult!!(NSDictionary.init(dictionary: ["status": "success","token": accessToken?.tokenString, "userId": accessToken?.userID]))
+                    self.flutterResult!!(NSDictionary.init(dictionary: ["status": "success","token": accessToken!.tokenString, "userId": accessToken!.userID]))
                 }
             }
         } else {
@@ -265,60 +269,39 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
         self.flutterResult!!(isInstalled)
     }
     
-    func canInvite() {
-        let can = FBSDKAppInviteDialog.init().canShow()
-        self.flutterResult!!(can)
-    }
-    
-    func invite() {
-        
-        let content = FBSDKAppInviteContent.init();
-        
-        content.appLinkURL = URL.init(string: self.appLinkUrl)
-        
-        content.appInvitePreviewImageURL = URL.init(string: self.appPreviewImageUrl)
-        
-        let viewController = UIApplication.shared.delegate?.window!!.rootViewController
-        
-        let dialog = FBSDKAppInviteDialog.init()
-        dialog.content = content
-        dialog.fromViewController = viewController
-        dialog.delegate = self
-        dialog.show()
-    }
-    
     func shareVideo() {
         
-        let content = FBSDKShareVideoContent.init()
-        let video = FBSDKShareVideo.init()
+        let content = ShareVideoContent.init()
+        let video = ShareVideo.init()
         video.videoURL = URL.init(string: self.shareVideoUrl)
         content.video = video
         
         let viewController = UIApplication.shared.delegate?.window!!.rootViewController
-        FBSDKShareDialog.show(from: viewController, with: content, delegate: self)
+        ShareDialog.init(fromViewController: viewController, content: content, delegate: self).show()
     }
     
     func sharePhotos() {
         
-        let content = FBSDKSharePhotoContent.init()
+        let content = SharePhotoContent.init()
         content.photos = []
         
         for it in self.sharePhotosUrl {
-            let photo = FBSDKSharePhoto.init()
+            let photo = SharePhoto.init()
             photo.imageURL = URL.init(string: it)
             photo.isUserGenerated = true
             content.photos.append(photo)
         }
         
         let viewController = UIApplication.shared.delegate?.window!!.rootViewController
-        FBSDKShareDialog.show(from: viewController, with: content, delegate: self)
+        ShareDialog.init(fromViewController: viewController, content: content, delegate: self).show()
     }
     
     func shareLink() {
-        let content = FBSDKShareLinkContent.init()
-        content.contentURL = URL.init(string: self.shareLinkUrl)
+        let content = ShareLinkContent.init()
+        content.contentURL = URL.init(string: self.shareLinkUrl)!
         let viewController = UIApplication.shared.delegate?.window!!.rootViewController
-        FBSDKShareDialog.show(from: viewController, with: content, delegate: self)
+        ShareDialog.init(fromViewController: viewController, content: content, delegate: self).show()
+        
     }
 
     
@@ -330,10 +313,10 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
         self.graphPathRequest(graphPath: self.graphRequestPath, parameters: self.graphRequestParameters)
     }
     
-    func graphPathRequest(graphPath: String!, parameters: [AnyHashable: Any]!) {
+    func graphPathRequest(graphPath: String!, parameters: [String: Any]!) {
         
-        let request = FBSDKGraphRequest.init(graphPath: graphPath, parameters: parameters)
-        request?.start() {
+        let request = GraphRequest.init(graphPath: graphPath, parameters: parameters)
+        request.start() {
             (_, result, error) in
             if error != nil {
                 let args = ["status": "error", "message": error?.localizedDescription]
@@ -345,7 +328,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
                 // JSON data to `NSDictionary` and `NSArray` objects.  This
                 // is nil if there was an error.
 
-                var data = ["status": "success", "result": result ]                
+                let data = ["status": "success", "result": result ]
                 self.flutterResult!!(data)
                 
                 
@@ -387,31 +370,22 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
         return items
     }
     
-    public func sharerDidCancel(_ sharer: FBSDKSharing!) {
+    public func sharerDidCancel(_ sharer: Sharing) {
         self.flutterResult!!(["status": "cancel"])
     }
     
-    public func sharer(_ sharer: FBSDKSharing!, didFailWithError error: Error!) {
-        self.flutterResult!!(["status": "error", "message": error?.localizedDescription])
+    public func sharer(_ sharer: Sharing, didFailWithError error: Error) {
+        self.flutterResult!!(["status": "error", "message": error.localizedDescription])
     }
     
-    public func sharer(_ sharer: FBSDKSharing!, didCompleteWithResults results: [AnyHashable : Any]!) {
+    public func sharer(_ sharer: Sharing, didCompleteWithResults results: [String : Any]) {
         self.flutterResult!!(["status": "success"])
     }
     
-    public func appInviteDialog(_ appInviteDialog: FBSDKAppInviteDialog!, didCompleteWithResults results: [AnyHashable : Any]!) {
-        
-        self.flutterResult!!(["status": "success"])
-    }
-    
-    public func appInviteDialog(_ appInviteDialog: FBSDKAppInviteDialog!, didFailWithError error: Error!) {
-        let args = ["status": "error", "message": error?.localizedDescription]
-        self.flutterResult!!(args)
-    }
-
     public func applicationDidBecomeActive(_ application: UIApplication){
         print("applicationDidBecomeActive")
-        FBSDKAppEvents.activateApp()
+        AppEvents.activateApp()
     }
 
 }
+

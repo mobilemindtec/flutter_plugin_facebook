@@ -84,33 +84,6 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  _canInvite() {
-    facebook.canInvite().then((result){
-      if(result)
-        setState((){  _status = "yes, you can invite"; });
-      else
-        setState((){  _status = "no, you can not invite"; });
-    }).catchError((err){
-      print(err);
-      setState((){  _status = "call error: ${err}"; });
-    });
-  }
-
-  _invite() {
-
-    var appUrl = "https://play.google.com/store/apps/details?id=br.com.mobloja.demo";
-    var appBanner = "https://www.appmobloja.com.br//images/sites/mobloja/slider2.png";
-
-    facebook.invite(appUrl, appBanner).then((result){
-      if(result.status == FbStatus.Success)
-        setState((){  _status = "invite ok"; });
-      else
-        setState((){  _status = "invite fail: ${result.message}"; });
-    }).catchError((err){
-      print(err);
-      setState((){  _status = "call error: ${err}"; });
-    });
-  }
 
   _requestMe() {
     facebook.requestMe().then((result){
@@ -158,8 +131,7 @@ class _MyAppState extends State<MyApp> {
               createButton("log in", _logIn),
               createButton("log out", _logOut),
               createButton("fb app is installed", _isInstaled),
-              createButton("request me profile", _requestMe),
-              createButton("invite", _invite),
+              createButton("request me profile", _requestMe)              
             ],
           ),
         ),

@@ -16,9 +16,9 @@ A new flutter plugin project.
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
 
-  s.dependency 'FBSDKCoreKit'
-  s.dependency 'FBSDKLoginKit'
-  s.dependency 'FBSDKShareKit'
+  s.dependency 'FBSDKCoreKit', '5.0.2'
+  s.dependency 'FBSDKLoginKit', '5.0.2'
+  s.dependency 'FBSDKShareKit', '5.0.2'
 
   s.ios.deployment_target = '8.0'
 

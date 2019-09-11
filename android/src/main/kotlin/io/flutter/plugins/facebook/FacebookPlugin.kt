@@ -94,7 +94,8 @@ public class FacebookPlugin : MethodCallHandler {
 
     }
 
-    override fun onMethodCall(call: MethodCall?, result: Result?) {
+    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result){
+    //override fun onMethodCall(call: MethodCall?, result: Result?) {
 
         when(call!!.method){
             methodLogInWithPublishPermissions -> {
@@ -177,28 +178,28 @@ public class FacebookPlugin : MethodCallHandler {
 
 
         if (call.hasArgument("permissions")) {
-            var list = call.argument<String>("permissions")
+            var list = call.argument<String>("permissions")!!
             permissions = list.split(",").toTypedArray()
         }
 
         if (call.hasArgument("fields")) {
-            fields = call.argument<String>("fields")
+            fields = call.argument<String>("fields")!!
         }
 
         if (call.hasArgument("appLinkUrl")) {
-            this.appLinkUrl = call.argument<String>("appLinkUrl")
+            this.appLinkUrl = call.argument<String>("appLinkUrl")!!
         }
 
         if (call.hasArgument("appPreviewImageUrl")) {
-            this.appPreviewImageUrl = call.argument<String>("appPreviewImageUrl")
+            this.appPreviewImageUrl = call.argument<String>("appPreviewImageUrl")!!
         }
 
         if (call.hasArgument("graphRequestPath")) {
-            this.graphRequestPath = call.argument<String>("graphRequestPath")
+            this.graphRequestPath = call.argument<String>("graphRequestPath")!!
         }
 
         if (call.hasArgument("graphRequestParameters") ) {
-            var map = call.argument<Map<String, String>>("graphRequestParameters")
+            var map = call.argument<Map<String, String>>("graphRequestParameters")!!
             graphRequestParameters.clear()
             for ((key, value) in map) {
             graphRequestParameters.put(key, value)
@@ -206,15 +207,15 @@ public class FacebookPlugin : MethodCallHandler {
         }
 
         if (call.hasArgument("videoUrl")) {
-            this.shareVideoUrl = call.argument<String>("videoUrl")
+            this.shareVideoUrl = call.argument<String>("videoUrl")!!
         }
 
         if (call.hasArgument("linkUrl")) {
-            this.shareLinkUrl = call.argument<String>("linkUrl")
+            this.shareLinkUrl = call.argument<String>("linkUrl")!!
         }
 
         if (call.hasArgument("sharePhotosUrl")) {
-            var photos =call.argument<List<String>>("sharePhotosUrl")
+            var photos = call.argument<List<String>>("sharePhotosUrl")!!
             this.sharePhotosUrl.clear()
 
             for (it in photos) {
