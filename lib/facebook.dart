@@ -57,6 +57,8 @@ class Facebook {
       if(fields != null)
         params["fields"] = fields;
 
+      print("logInWithReadPermissions params = $params");
+
       final Map result = await platform.invokeMethod('logInWithReadPermissions', params);
 
       return new FbResult(status: FbStatus.Success, data: result);

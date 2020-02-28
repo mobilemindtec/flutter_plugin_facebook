@@ -229,7 +229,21 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
                     self.flutterResult!!(args)
                 } else {
                     let accessToken = result!.token
-                    self.flutterResult!!(NSDictionary.init(dictionary: ["status": "success","token": accessToken!.tokenString, "userId": accessToken!.userID]))
+                    
+                    if accessToken == nil {
+                        
+                        self.flutterResult!!(NSDictionary.init(dictionary: ["status": "error", "message": "accessToken is null"]))
+                    }else {
+                        let result = NSDictionary.init(dictionary: [
+                            "status": "success",
+                            "token": accessToken!.tokenString,
+                            "userId": accessToken!.userID
+                        ])
+                        
+                        self.flutterResult!!(result)
+                    }
+
+                    
                 }
             }
         } else {
@@ -238,16 +252,29 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     }
     
     func logInWithReadPermissions() {
+
         if self.initialized {
             let viewController = UIApplication.shared.delegate?.window!!.rootViewController
             self.loginManager!!.logIn(permissions: self.permissions, from: viewController) {
                 (result, error) in
+
                 if error != nil {
                     let args = NSDictionary.init(dictionary: ["status": "error", "message": error!.localizedDescription])
                     self.flutterResult!!(args);
                 } else {
-                    let accessToken = result?.token
-                    self.flutterResult!!(NSDictionary.init(dictionary: ["status": "success","token": accessToken!.tokenString, "userId": accessToken!.userID]))
+                    let accessToken = result!.token
+                    if accessToken == nil {
+                        
+                        self.flutterResult!!(NSDictionary.init(dictionary: ["status": "error", "message": "accessToken is null"]))
+                    }else {
+                        let result = NSDictionary.init(dictionary: [
+                            "status": "success",
+                            "token": accessToken!.tokenString,
+                            "userId": accessToken!.userID
+                        ])
+                        
+                        self.flutterResult!!(result)
+                    }
                 }
             }
         } else {
@@ -383,9 +410,18 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     }
     
     public func applicationDidBecomeActive(_ application: UIApplication){
-        print("applicationDidBecomeActive")
         AppEvents.activateApp()
     }
 
+    public func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        let result = FBSDKCoreKit.ApplicationDelegate.shared.application(app, open: url, options: options)
+        return result
+    }
+    
+    @nonobjc public func application(_ app: UIApplication,
+                              didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        let result = FBSDKCoreKit.ApplicationDelegate.shared.application(app, didFinishLaunchingWithOptions: launchOptions)
+        return result
+    }
 }
 
