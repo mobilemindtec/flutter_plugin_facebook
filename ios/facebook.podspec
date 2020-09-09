@@ -16,9 +16,10 @@ A new flutter plugin project.
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
 
-  s.dependency 'FBSDKCoreKit', '6.0.0'
-  s.dependency 'FBSDKLoginKit', '6.0.0'
-  s.dependency 'FBSDKShareKit', '6.0.0'
+  pod 'Facebook-iOS-SDK'
+  #s.dependency 'FBSDKCoreKit', '6.0.0'
+  #s.dependency 'FBSDKLoginKit', '6.0.0'
+  #s.dependency 'FBSDKShareKit', '6.0.0'
   
 
   s.ios.deployment_target = '10.0'

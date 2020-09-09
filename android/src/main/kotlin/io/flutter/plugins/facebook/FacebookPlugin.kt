@@ -17,6 +17,8 @@ import com.facebook.share.Sharer
 import com.facebook.share.model.*
 import com.facebook.share.widget.AppInviteDialog
 import com.facebook.share.widget.ShareDialog
+import com.facebook.applinks.AppLinkData
+import com.facebook.applinks.AppLinkData.CompletionHandler
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -61,7 +63,7 @@ public class FacebookPlugin : MethodCallHandler {
     private var methodResult: Result? = null
 
     private var loginManager: LoginManager? = null
-    private var permissions: Array<String> = arrayOf("public_profile","email")
+    private var permissions: Array<String> = arrayOf("public_profile", "email")
     private var fields: String = "id,name,email"
 
     private var initialized: Boolean = false
@@ -73,6 +75,7 @@ public class FacebookPlugin : MethodCallHandler {
     private var shareLinkUrl: String = ""
     private var shareVideoUrl: String = ""
     private var sharePhotosUrl: MutableList<String> = mutableListOf()
+    private var fetchDeferredAppLinkData = false
 
 
     companion object {
@@ -223,6 +226,10 @@ public class FacebookPlugin : MethodCallHandler {
             }
         }
 
+        if(call.hasArgument("fetchDeferredAppLinkData")){
+            this.fetchDeferredAppLinkData = call.argument<Boolean>("fetchDeferredAppLinkData")!!
+        }
+
     }
 
     fun initSdk(){
@@ -230,6 +237,17 @@ public class FacebookPlugin : MethodCallHandler {
         if(!this.initialized) {
             try {
                 FacebookSdk.sdkInitialize(this.application)
+
+                if(this.fetchDeferredAppLinkData){
+                    AppLinkData.fetchDeferredAppLinkData(this.application,
+                        object : CompletionHandler {
+                            override fun onDeferredAppLinkDataFetched(appLinkData: AppLinkData?) {
+                                Log.d("FBPlugin", "appLinkData: " + appLinkData)
+                            }
+                        }
+                    )
+                }
+
                 this.loginManager = LoginManager.getInstance();
                 this.callbackManager = CallbackManager.Factory.create()
                 this.loginManager!!.registerCallback(this.callbackManager, LoginCallback())
@@ -274,8 +292,8 @@ public class FacebookPlugin : MethodCallHandler {
         if(current != null) {
             var accessToken = AccessToken.getCurrentAccessToken()
             this.methodResult!!.success(mapOf(
-              "token" to accessToken.token,
-              "userId" to accessToken.userId
+                    "token" to accessToken.token,
+                    "userId" to accessToken.userId
             ))
         } else {
             this.methodResult!!.success(null)
@@ -293,7 +311,7 @@ public class FacebookPlugin : MethodCallHandler {
 
         try {
             var info = packageManager.getPackageInfo(targetPackage, PackageManager.GET_META_DATA);
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             return false
         }
 

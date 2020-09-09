@@ -31,9 +31,14 @@ class Facebook {
 
   static const platform = const MethodChannel('plugins.flutter.io/facebook');
 
-  Future<FbResult> initSdk() async {
+  Future<FbResult> initSdk({bool fetchDeferredAppLinkData = false}) async {
     try{
-      final Map result = await platform.invokeMethod('initSdk');
+
+      var params = {
+        "fetchDeferredAppLinkData": fetchDeferredAppLinkData
+      };
+
+      final Map result = await platform.invokeMethod('initSdk', params);
 
 
       if(result["status"] == "success")

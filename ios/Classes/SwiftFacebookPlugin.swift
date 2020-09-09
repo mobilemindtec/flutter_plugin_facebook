@@ -39,6 +39,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     private var shareLinkUrl: String = ""
     private var shareVideoUrl: String = ""
     private var sharePhotosUrl: [String] = [String]()
+    private var fetchDeferredAppLinkData: Bool = false
     
     private var flutterResult: FlutterResult?!
     
@@ -134,7 +135,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     
     func readArgs(call: FlutterMethodCall) {
         
-        if call.arguments is Dictionary<String, String> {
+        if call.arguments is Dictionary<String, Any> {
             var map = call.arguments as! Dictionary<String, Any>
             if let value = map["permissions"]{
                 let val = value as! String
@@ -181,16 +182,38 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
                     self.sharePhotosUrl.append(it)
                 }
             }
+            
+            if let value = map["fetchDeferredAppLinkData"] {
+                self.fetchDeferredAppLinkData = value  as! Bool
+            }
 
         }
         
     }
     
     func initSdk() {
+        print("facebook initSdk")
         self.loginManager = LoginManager.init()
         if self.loginManager != nil {
             self.initialized = true
-            
+
+            if self.fetchDeferredAppLinkData {
+                AppLinkUtility.fetchDeferredAppLink { (url, error) in
+                    if let error = error {
+                        print("facebook Received error while fetching deferred app link %@", error)
+                    } else {
+                        //print("facebook Received deferred app link %@", url)
+                    }
+                    /*if let url = url {
+                        if #available(iOS 10, *) {
+                            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                        } else {
+                            UIApplication.shared.openURL(url)
+                        }
+                    }*/
+                }
+            }
+
             self.flutterResult!!(NSDictionary.init(dictionary: ["status": "success"]))
         }else{
             self.flutterResult!!(NSDictionary.init(dictionary: ["status": "error", "message": "facebook sdk not initialized"]))
