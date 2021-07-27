@@ -16,7 +16,8 @@ class FacebookException implements Exception {
 enum FbStatus {
   Error,
   Success,
-  Cancel
+  Cancel,
+  None
 }
 
 class FbResult{
@@ -24,7 +25,7 @@ class FbResult{
   String message;
   Map data;
 
-  FbResult({this.status, this.message, this.data});
+  FbResult({this.status = FbStatus.None, this.message = "", this.data = const {}});
 }
 
 class Facebook {
@@ -51,7 +52,7 @@ class Facebook {
     }
   }
 
-  Future<FbResult> logInWithReadPermissions({String permissions, String fields}) async {
+  Future<FbResult> logInWithReadPermissions({String? permissions, String? fields}) async {
     try{
 
       var params = {};
@@ -73,7 +74,7 @@ class Facebook {
     }
   }
 
-  Future<FbResult> logInWithPublishPermissions({String permissions, String fields}) async {
+  Future<FbResult> logInWithPublishPermissions({String? permissions, String? fields}) async {
     try{
 
 
@@ -115,7 +116,7 @@ class Facebook {
     try{
       final Map result = await platform.invokeMethod('getAccessToken');
 
-      new FbResult(status: FbStatus.Success, data: result != null ? result["token"] : null);
+      return new FbResult(status: FbStatus.Success, data: result != null ? result["token"] : null);
     }on PlatformException catch (e) {
       throw new FacebookException(e.message);
     }
@@ -130,7 +131,7 @@ class Facebook {
     }
   }
 
-  Future<FbResult> requestMe([String fields]) async {
+  Future<FbResult> requestMe([String? fields]) async {
     try{
 
       var args = {};
@@ -150,7 +151,7 @@ class Facebook {
     }
   }
 
-  Future<FbResult> requestGraph([Map parameters]) async {
+  Future<FbResult> requestGraph([Map? parameters]) async {
     try{
 
       var args = {};

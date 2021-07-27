@@ -139,7 +139,7 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  Container createButton(String text, Function action){
+  Container createButton(String text, VoidCallback action){
     return new Container(
       padding: const EdgeInsets.only(top: 10.0),
       width: 200.0,

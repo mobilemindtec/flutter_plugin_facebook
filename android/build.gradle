@@ -45,15 +45,15 @@ apply plugin: 'kotlin-android'
 
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
     //buildToolsVersion '25.0.3'
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 29
+        minSdkVersion 20
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
