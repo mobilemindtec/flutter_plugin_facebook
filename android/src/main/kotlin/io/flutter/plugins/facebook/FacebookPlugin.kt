@@ -10,25 +10,25 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import com.facebook.*
-import com.facebook.GraphRequest.newGraphPathRequest
+import com.facebook.GraphRequest
 import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
 import com.facebook.share.Sharer
 import com.facebook.share.model.*
-import com.facebook.share.widget.AppInviteDialog
 import com.facebook.share.widget.ShareDialog
 import com.facebook.applinks.AppLinkData
 import com.facebook.applinks.AppLinkData.CompletionHandler
+import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
-import java.util.*
 import org.json.JSONObject
 import org.json.JSONArray
 import java.util.ArrayList
-import org.json.JSONException
 import java.util.HashMap
 
 
@@ -42,8 +42,6 @@ private val methodGetAccessToken: String = "getAccessToken"
 private val methodInitSdk: String = "initSdk"
 
 private val methodIsinstalled: String = "isInstalled"
-private val methodCanInvite: String = "canInvite"
-private val methodInvite: String = "invite"
 
 private val methodRequestGraphPath: String = "requestGraphPath"
 private val methodRequestMe: String = "requestMe"
@@ -52,9 +50,9 @@ private val methodShareLink: String = "shareLink"
 private val methodSharePhotos: String = "sharePhotos"
 private val methodShareVideo: String = "shareVideo"
 
-public class FacebookPlugin : MethodCallHandler {
+public class FacebookPlugin : MethodCallHandler, FlutterPlugin, ActivityAware {
 
-    private var registrar: PluginRegistry.Registrar? = null
+    //private var registrar: PluginRegistry.Registrar? = null
     private val activityHandler: ActivityHandler = ActivityHandler()
     private var application: Application? = null
     private var activity: Activity? = null
@@ -76,6 +74,7 @@ public class FacebookPlugin : MethodCallHandler {
     private var shareVideoUrl: String = ""
     private var sharePhotosUrl: MutableList<String> = mutableListOf()
     private var fetchDeferredAppLinkData = false
+    private var channel: MethodChannel? = null
 
 
     companion object {
@@ -83,18 +82,18 @@ public class FacebookPlugin : MethodCallHandler {
         fun registerWith(registrar: PluginRegistry.Registrar){
             var channel = MethodChannel(registrar.messenger(), channelName)
             channel.setMethodCallHandler(FacebookPlugin(registrar))
+
         }
     }
 
     private constructor(registrar: PluginRegistry.Registrar) {
-
-        this.registrar = registrar
         this.application = registrar.context() as Application
         this.activity = registrar.activity()
-
         this.application!!.registerActivityLifecycleCallbacks(activityHandler)
         registrar.addActivityResultListener(activityHandler)
+    }
 
+    constructor() {
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result){
@@ -135,16 +134,6 @@ public class FacebookPlugin : MethodCallHandler {
                 methodResult = result
                 readArgs(call)
                 isInstalled()
-            }
-            methodCanInvite -> {
-                methodResult = result
-                readArgs(call)
-                canInvite()
-            }
-            methodInvite -> {
-                methodResult = result
-                readArgs(call)
-                invite()
             }
             methodRequestGraphPath -> {
                 methodResult = result
@@ -236,13 +225,13 @@ public class FacebookPlugin : MethodCallHandler {
 
         if(!this.initialized) {
             try {
-                FacebookSdk.sdkInitialize(this.application)
+                //FacebookSdk.sdkInitialize(this.application!!)
 
                 if(this.fetchDeferredAppLinkData){
                     AppLinkData.fetchDeferredAppLinkData(this.application,
                         object : CompletionHandler {
                             override fun onDeferredAppLinkDataFetched(appLinkData: AppLinkData?) {
-                                Log.d("FBPlugin", "appLinkData: " + appLinkData)
+                                Log.d("FBPlugin", "appLinkData: $appLinkData")
                             }
                         }
                     )
@@ -290,7 +279,7 @@ public class FacebookPlugin : MethodCallHandler {
     fun getAccessToken() {
         var current = AccessToken.getCurrentAccessToken()
         if(current != null) {
-            var accessToken = AccessToken.getCurrentAccessToken()
+            var accessToken = AccessToken.getCurrentAccessToken()!!
             this.methodResult!!.success(mapOf(
                     "token" to accessToken.token,
                     "userId" to accessToken.userId
@@ -318,41 +307,6 @@ public class FacebookPlugin : MethodCallHandler {
         return true
     }
 
-    fun canInvite() {
-        var can = AppInviteDialog.canShow()
-        this.methodResult!!.success(can)
-    }
-
-    fun invite() {
-        if (AppInviteDialog.canShow()) {
-            var content = AppInviteContent.Builder()
-                    .setApplinkUrl(this.appLinkUrl)
-                    .setPreviewImageUrl(this.appPreviewImageUrl)
-                    .build();
-
-            var appInviteDialog = AppInviteDialog(activity)
-
-            val callback = object : FacebookCallback<AppInviteDialog.Result> {
-
-                override fun  onSuccess(result: AppInviteDialog.Result) {
-                    methodResult!!.success(mapOf("status" to "success"))
-                }
-                override fun  onCancel() {
-                    methodResult!!.success(mapOf("status" to "cancel"))
-                }
-                override fun  onError(e: FacebookException) {
-                    methodResult!!.success(mapOf("status" to "error", "message" to e.message))
-
-                }
-            }
-
-            appInviteDialog.registerCallback(this.callbackManager, callback)
-            appInviteDialog.show(content)
-
-        }else{
-            this.methodResult!!.success(mapOf("status" to "success"))
-        }
-    }
 
     fun shareContent(content: ShareContent<*, *>){
 
@@ -370,7 +324,7 @@ public class FacebookPlugin : MethodCallHandler {
             }
         }
 
-        shareDialog.registerCallback(this.callbackManager, shareCallback);
+        shareDialog.registerCallback(this.callbackManager!!, shareCallback);
         shareDialog.show(content)
     }
 
@@ -424,15 +378,15 @@ public class FacebookPlugin : MethodCallHandler {
             if(response?.error != null){
                 //Log.e("FLUTTER FB", response?.error.errorMessage, response?.error.exception)
 
-                methodResult!!.success(mapOf("status" to "error", "message" to response?.error.errorMessage))
+                methodResult!!.success(mapOf("status" to "error", "message" to response?.error?.errorMessage))
             } else {
                 //Log.i("FLUTTER FB", response.rawResponse)
                 var result: Any? = null
 
                 if(response.jsonObject != null){
-                    result = toMap(response.jsonObject)
+                    result = toMap(response.jsonObject!!)
                 } else if (response.jsonArray != null){
-                    result = toList(response.jsonArray)
+                    result = toList(response.jsonArray!!)
                 }
 
                 methodResult!!.success(mapOf("status" to "success", "result" to result))
@@ -440,9 +394,9 @@ public class FacebookPlugin : MethodCallHandler {
         }
 
 
-        var request = newGraphPathRequest(accessToken, graphPath, callback)
+        var request = GraphRequest.newGraphPathRequest(accessToken, graphPath, callback)
 
-        if(!parameters.isEmpty()) {
+        if(parameters.isNotEmpty()) {
 
             var bundle = Bundle()
             for((key, value) in parameters){
@@ -456,12 +410,12 @@ public class FacebookPlugin : MethodCallHandler {
     }
 
 
-    fun toMap(jsonobj: JSONObject): Map<String, Any> {
+    fun toMap(jsonObj: JSONObject): Map<String, Any> {
         val map = HashMap<String, Any>()
-        val keys = jsonobj.keys()
+        val keys = jsonObj.keys()
         while (keys.hasNext()) {
             val key = keys.next()
-            var value = jsonobj.get(key)
+            var value = jsonObj.get(key)
             if (value is JSONArray) {
                 value = toList(value)
             } else if (value is JSONObject) {
@@ -528,7 +482,7 @@ public class FacebookPlugin : MethodCallHandler {
 
     inner class LoginCallback: FacebookCallback<LoginResult> {
 
-        override fun onSuccess(result: LoginResult?) {
+        override fun onSuccess(result: LoginResult) {
             var data = mapOf(
                     "status" to "success",
                     "token" to result!!.accessToken.token,
@@ -544,7 +498,7 @@ public class FacebookPlugin : MethodCallHandler {
             methodResult!!.success(data)
         }
 
-        override fun onError(error: FacebookException?) {
+        override fun onError(error: FacebookException) {
             var data = mapOf(
                     "status" to "error",
                     "message" to error!!.message
@@ -552,5 +506,37 @@ public class FacebookPlugin : MethodCallHandler {
             methodResult!!.success(data)
         }
 
+    }
+
+
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, channelName)
+        channel!!.setMethodCallHandler(this)
+    }
+
+    override fun onDetachedFromEngine(p0: FlutterPlugin.FlutterPluginBinding) {
+        if(channel != null)
+            channel!!.setMethodCallHandler(null)
+    }
+
+    override fun onAttachedToActivity(activityPluginBinding: ActivityPluginBinding) {
+        this.activity = activityPluginBinding.activity;
+        this.application = activityPluginBinding.activity.application;
+        this.application!!.registerActivityLifecycleCallbacks(activityHandler)
+        activityPluginBinding.addActivityResultListener(activityHandler)
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() {
+        TODO("Not yet implemented")
+    }
+
+    override fun onReattachedToActivityForConfigChanges(p0: ActivityPluginBinding) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onDetachedFromActivity() {
+        this.activity = null;
+        this.application = null;
+        this.application!!.unregisterActivityLifecycleCallbacks(activityHandler)
     }
 }

@@ -65,8 +65,8 @@ android {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.facebook.android:facebook-android-sdk:5.0.2'
+    implementation 'com.facebook.android:facebook-android-sdk:12.1.0'
     implementation 'com.facebook.android:facebook-marketing:5.0.2'
-    provided fileTree(dir: "$flutterRoot/bin/cache/artifacts/engine/android-arm", include: ['*.jar'])
+    compileOnly fileTree(dir: "$flutterRoot/bin/cache/artifacts/engine/android-arm", include: ['*.jar'])
 }
 
