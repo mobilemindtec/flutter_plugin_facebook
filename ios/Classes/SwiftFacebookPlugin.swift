@@ -4,7 +4,7 @@ import FBSDKCoreKit
 import FBSDKLoginKit
 import FBSDKShareKit
     
-public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate, SharingDelegate {
+public class SwiftFacebookPlugin: NSObject, FlutterPlugin, SharingDelegate {
 
     
     
@@ -43,11 +43,28 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     
     private var flutterResult: FlutterResult?!
     
+    private var mainWindow: UIWindow? {
+         if let applicationWindow = UIApplication.shared.delegate?.window ?? nil {
+             return applicationWindow
+         }
+         
+         
+         if #available(iOS 13.0, *) {
+             if let scene = UIApplication.shared.connectedScenes.first(where: { $0.session.role == .windowApplication }),
+                let sceneDelegate = scene.delegate as? UIWindowSceneDelegate,
+                let window = sceneDelegate.window as? UIWindow  {
+                 return window
+             }
+         }
+         
+         return nil
+     }
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: channelName, binaryMessenger: registrar.messenger())
         let instance = SwiftFacebookPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
-        
+    
         registrar.addApplicationDelegate(instance)
     }
     
@@ -136,7 +153,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     func readArgs(call: FlutterMethodCall) {
         
         if call.arguments is Dictionary<String, Any> {
-            var map = call.arguments as! Dictionary<String, Any>
+            let map = call.arguments as! Dictionary<String, Any>
             if let value = map["permissions"]{
                 let val = value as! String
                 self.permissions = val.components(separatedBy: ",")
@@ -197,6 +214,9 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
         if self.loginManager != nil {
             self.initialized = true
 
+            
+            Settings.shared.isAutoLogAppEventsEnabled = true
+            
             if self.fetchDeferredAppLinkData {
                 AppLinkUtility.fetchDeferredAppLink { (url, error) in
                     if let error = error {
@@ -214,7 +234,10 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
                 }
             }
 
+            //AppEvents.activateApp(<#T##self: AppEvents##AppEvents#>)
+            
             self.flutterResult!!(NSDictionary.init(dictionary: ["status": "success"]))
+            
         }else{
             self.flutterResult!!(NSDictionary.init(dictionary: ["status": "error", "message": "facebook sdk not initialized"]))
         }
@@ -244,7 +267,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     
     func logInWithPublishPermissions() {
         if self.initialized {
-            let viewController = UIApplication.shared.delegate?.window!!.rootViewController
+            let viewController = self.mainWindow!.rootViewController
             self.loginManager!!.logIn(permissions: self.permissions, from: viewController) {
                 (result, error) in
                 if error != nil {
@@ -277,7 +300,7 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     func logInWithReadPermissions() {
 
         if self.initialized {
-            let viewController = UIApplication.shared.delegate?.window!!.rootViewController
+            let viewController = self.mainWindow!.rootViewController
             self.loginManager!!.logIn(permissions: self.permissions, from: viewController) {
                 (result, error) in
 
@@ -322,12 +345,11 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     func shareVideo() {
         
         let content = ShareVideoContent.init()
-        let video = ShareVideo.init()
-        video.videoURL = URL.init(string: self.shareVideoUrl)
-        content.video = video
         
-        let viewController = UIApplication.shared.delegate?.window!!.rootViewController
-        ShareDialog.init(fromViewController: viewController, content: content, delegate: self).show()
+        content.video = ShareVideo.init(videoURL: URL.init(string: self.shareVideoUrl)!)
+        
+        let viewController = self.mainWindow!.rootViewController
+        ShareDialog.init(viewController: viewController, content: content, delegate: self).show()
     }
     
     func sharePhotos() {
@@ -336,21 +358,19 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
         content.photos = []
         
         for it in self.sharePhotosUrl {
-            let photo = SharePhoto.init()
-            photo.imageURL = URL.init(string: it)
-            photo.isUserGenerated = true
+            let photo = SharePhoto.init(imageURL: URL.init(string: it)!, isUserGenerated: true)
             content.photos.append(photo)
         }
         
-        let viewController = UIApplication.shared.delegate?.window!!.rootViewController
-        ShareDialog.init(fromViewController: viewController, content: content, delegate: self).show()
+        let viewController = self.mainWindow!.rootViewController
+        ShareDialog.init(viewController: viewController, content: content, delegate: self).show()
     }
     
     func shareLink() {
         let content = ShareLinkContent.init()
         content.contentURL = URL.init(string: self.shareLinkUrl)!
-        let viewController = UIApplication.shared.delegate?.window!!.rootViewController
-        ShareDialog.init(fromViewController: viewController, content: content, delegate: self).show()
+        let viewController = self.mainWindow!.rootViewController
+        ShareDialog.init(viewController: viewController, content: content, delegate: self).show()
         
     }
 
@@ -433,18 +453,28 @@ public class SwiftFacebookPlugin: NSObject, FlutterPlugin, UIApplicationDelegate
     }
     
     public func applicationDidBecomeActive(_ application: UIApplication){
-        AppEvents.activateApp()
-    }
-
-    public func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
-        let result = FBSDKCoreKit.ApplicationDelegate.shared.application(app, open: url, options: options)
-        return result
+        
     }
     
-    @nonobjc public func application(_ app: UIApplication,
-                              didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        let result = FBSDKCoreKit.ApplicationDelegate.shared.application(app, didFinishLaunchingWithOptions: launchOptions)
-        return result
+    /// START ALLOW HANDLE NATIVE FACEBOOK APP
+    public func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [AnyHashable : Any] = [:]) -> Bool {
+        
+        var options = [UIApplication.LaunchOptionsKey: Any]()
+        for (k, value) in launchOptions {
+            let key = k as! UIApplication.LaunchOptionsKey
+            options[key] = value
+        }
+        ApplicationDelegate.shared.application(application,didFinishLaunchingWithOptions: options)
+        return true
+    }
+    
+    public func application( _ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:] ) -> Bool {
+        
+        let processed = ApplicationDelegate.shared.application(
+            app, open: url,
+            sourceApplication: options[UIApplication.OpenURLOptionsKey.sourceApplication] as? String,
+            annotation: options[UIApplication.OpenURLOptionsKey.annotation])
+        return processed;
     }
 }
 

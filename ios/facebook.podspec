@@ -23,7 +23,7 @@ A new flutter plugin project.
 
   
 
-  s.ios.deployment_target = '10.0'
+  s.ios.deployment_target = '12.0'
 
 end
 
