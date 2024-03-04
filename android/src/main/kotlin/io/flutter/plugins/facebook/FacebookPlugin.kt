@@ -18,6 +18,7 @@ import com.facebook.share.model.*
 import com.facebook.share.widget.ShareDialog
 import com.facebook.applinks.AppLinkData
 import com.facebook.applinks.AppLinkData.CompletionHandler
+import com.facebook.appevents.AppEventsLogger
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -225,10 +226,12 @@ public class FacebookPlugin : MethodCallHandler, FlutterPlugin, ActivityAware {
 
         if(!this.initialized) {
             try {
-                //FacebookSdk.sdkInitialize(this.application!!)
+                val app = this.application!!
+                FacebookSdk.sdkInitialize(app)
+                AppEventsLogger.activateApp(app);
 
                 if(this.fetchDeferredAppLinkData){
-                    AppLinkData.fetchDeferredAppLinkData(this.application,
+                    AppLinkData.fetchDeferredAppLinkData(app,
                         object : CompletionHandler {
                             override fun onDeferredAppLinkDataFetched(appLinkData: AppLinkData?) {
                                 Log.d("FBPlugin", "appLinkData: $appLinkData")
@@ -256,13 +259,13 @@ public class FacebookPlugin : MethodCallHandler, FlutterPlugin, ActivityAware {
     fun logInWithReadPermissions(){
         var permissions = mutableListOf<String>()
         permissions.addAll(this.permissions)
-        this.loginManager!!.logInWithReadPermissions(this.activity, permissions)
+        this.loginManager!!.logInWithReadPermissions(this.activity!!, permissions)
     }
 
     fun logInWithPublishPermissions(){
         var permissions = mutableListOf<String>()
         permissions.addAll(this.permissions)
-        this.loginManager!!.logInWithPublishPermissions(this.activity, permissions)
+        this.loginManager!!.logInWithPublishPermissions(this.activity!!, permissions)
     }
 
     fun logOut() {
@@ -310,7 +313,7 @@ public class FacebookPlugin : MethodCallHandler, FlutterPlugin, ActivityAware {
 
     fun shareContent(content: ShareContent<*, *>){
 
-        var shareDialog = ShareDialog(this.activity)
+        var shareDialog = ShareDialog(this.activity!!)
 
         var shareCallback = object : FacebookCallback<Sharer.Result> {
             override fun  onSuccess(result: Sharer.Result) {
