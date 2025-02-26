@@ -78,25 +78,6 @@ public class FacebookPlugin : MethodCallHandler, FlutterPlugin, ActivityAware {
     private var channel: MethodChannel? = null
 
 
-    companion object {
-        @JvmStatic
-        fun registerWith(registrar: PluginRegistry.Registrar){
-            var channel = MethodChannel(registrar.messenger(), channelName)
-            channel.setMethodCallHandler(FacebookPlugin(registrar))
-
-        }
-    }
-
-    private constructor(registrar: PluginRegistry.Registrar) {
-        this.application = registrar.context() as Application
-        this.activity = registrar.activity()
-        this.application!!.registerActivityLifecycleCallbacks(activityHandler)
-        registrar.addActivityResultListener(activityHandler)
-    }
-
-    constructor() {
-    }
-
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result){
     //override fun onMethodCall(call: MethodCall?, result: Result?) {
 
